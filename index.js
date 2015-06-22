@@ -45,19 +45,7 @@ module.exports = function(baseUrl, protocol, staticFolders){
       jar: j,
       uri: url(req.url),
       form: req.body
-    }, function (error, response, body) {
-      if(error){
-        console.log(colors.red(error));
-        res.send(error);
-      }{
-        _.forEach(response.headers, function(value, key){
-          res.setHeader(key, value);
-        });
-        console.log(colors.green('Successfully requested >> ', url(req.url)));
-        res.status(response.statusCode);
-        res.send(new Buffer(body));
-      }
-    });
+    }).pipe(res);
   };
 
   app.get('/*', makeRequest);
