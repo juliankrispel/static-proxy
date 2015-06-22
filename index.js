@@ -44,7 +44,7 @@ var makeRequest = function(req, res){
         res.setHeader(key, value);
       });
       console.log(colors.green('Successfully requested >> ', url(req.url)));
-      res.send(body);
+      res.send(new Buffer(body));
     }
   });
 };
