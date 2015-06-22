@@ -9,10 +9,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.13.1",
     "connect": "^3.4.0",
+    "cookie-parser": "^1.3.5",
     "express": "^4.13.0",
     "lodash": "^3.9.3",
-    "superstatic": "^2.2.1"
+    "multer": "^0.1.8",
+    "superstatic": "^2.2.1",
+    "tough-cookie": "^2.0.0"
   },
   "devDependencies": {
     "colors": "^1.1.2",
