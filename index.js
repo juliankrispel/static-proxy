@@ -7,19 +7,28 @@ var _ = require('lodash');
 var path = require('path');
 var app = express();
 var colors = require('colors');
-var protocol = 'https://';
 var bodyParser = require('body-parser')
 
-module.exports = function(baseUrl){
+module.exports = function(baseUrl, protocol, staticFolders){
+
+  if (protocol === undefined){
+    protocol = 'https';
+  }
+  if (staticFolders === undefined){
+    staticFolders = ['public'];
+  }
+
   app.use(cookieParser());
   app.use(bodyParser.json());
-  app.use(express.static('public'));
+  staticFolders.forEach(function(folder){
+    app.use(express.static(folder));
+  });
   app.use(bodyParser.urlencoded({
     extended: true
   }));
 
   var url = function(url){
-    return protocol + path.join(baseUrl, url);
+    return protocol + '://' + path.join(baseUrl, url);
   };
 
   var j = request.jar();

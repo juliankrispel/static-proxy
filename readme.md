@@ -7,6 +7,6 @@ This'll be a cli tool. For now just use it like this:
 ```javascript
 var staticProxy = require('static-proxy');
 
-// start the server
-staticProxy('http://google.com');
+// start the server with arguments url, protocol and [static folders]
+staticProxy('http://google.com', 'https', ['public']);
 ```

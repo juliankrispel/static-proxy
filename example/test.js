@@ -1,3 +1,3 @@
 var staticProxy = require('../index');
 
-staticProxy('app.rnfrstqa.com');
+staticProxy('app.rnfrstqa.com', 'https', ['boing']);
