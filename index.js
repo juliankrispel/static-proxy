@@ -45,6 +45,7 @@ module.exports = function(baseUrl){
           res.setHeader(key, value);
         });
         console.log(colors.green('Successfully requested >> ', url(req.url)));
+        res.status(response.statusCode);
         res.send(new Buffer(body));
       }
     });
