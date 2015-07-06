@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 var express = require('express');
 var request = require('request');
+var through2 = require('through2');
 var cookieParser = require('cookie-parser');
 var tough = require('tough-cookie');
 var Cookie = tough.Cookie;
@@ -11,6 +12,7 @@ var app = express();
 var colors = require('colors');
 var bodyParser = require('body-parser');
 var package = require('./package.json');
+var cookieUrl = 'rainforestqa.com'
 
 var list = function(list){
   return list.split(',').filter(function(item){ return item.length > 0});
@@ -19,6 +21,10 @@ var list = function(list){
 var stripProtocol = function(url){
   return url.replace(/.+\:\/\//, '');
 }
+
+var replaceUrl = function(body, url, replacementUrl){
+  return body.toString().replace(url, replacementUrl);
+};
 
 cli
   .version(package.version)
@@ -33,7 +39,6 @@ if(!module.parent){
 }
 
 function staticProxy(proxyUrl, port, protocol, staticFolders){
-  console.log('static folders', staticFolders);
   if(proxyUrl === undefined){
     console.log(colors.red('Error: a url for the proxy must be defined\n') +
              colors.yellow('Define a proxy-url Like this: \n' +
@@ -62,25 +67,54 @@ function staticProxy(proxyUrl, port, protocol, staticFolders){
     extended: true
   }));
 
-  var url = function(url){
+  var makeUrl = function(url){
     return protocol + '://' + path.join(proxyUrl, url);
   };
 
   var j = request.jar();
 
   var makeRequest = function(req, res){
-    console.log(colors.yellow('Requesting url >> ', url(req.url)));
+    console.log(colors.yellow('Requesting url >> ', makeUrl(req.url)));
     // assign cookies to cookiejar
     _.forEach(req.cookies, function(value, key){
-      j.setCookie(key + '=' + value, proxyUrl);
+      //j.setCookie(req.cookie(key+'='+value, 'rainforestqa.com'));
+
+      j.setCookie(key + '=' + value, 'https://app.rainforestqa.com');
     });
+
+    var pipe = false
 
     request({
       method: req.method,
       jar: j,
-      uri: url(req.url),
+      uri: makeUrl(req.url),
       form: req.body
-    }).pipe(res);
+    }, function (error, response, body) {
+      if(error){
+        console.log(colors.red(error));
+        res.send(error);
+      }{
+        //_.contains(response.headers['content-type'])
+        _.forEach(response.headers, function(value, key){
+          if (key === 'set-cookie' || key === 'location'){
+            if (_.isString(value)){
+              value = value.replace(proxyUrl, 'localhost:'+ port);
+              value = value.replace('https', 'http')
+            }else if (_.isArray(value)){
+              value = value.map(function(val){ return val.replace(proxyUrl, 'localhost:'+ port); });
+            }
+          }
+          res.setHeader(key, value);
+        });
+        if(_.contains(response.headers['content-type'], 'text/html')){
+          body = body.replace(proxyUrl, 'localhost:'+ port);
+        }
+        console.log(_.keys(res));
+        console.log(colors.green('Successfully requested >> ', makeUrl(req.url)));
+        res.status(response.statusCode);
+        res.send(new Buffer(body));
+      }
+    });
   };
 
   app.get('/*', makeRequest);
