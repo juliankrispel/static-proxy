@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 var express = require('express');
 var request = require('request');
-var through2 = require('through2');
 var cookieParser = require('cookie-parser');
 var tough = require('tough-cookie');
 var Cookie = tough.Cookie;
