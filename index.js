@@ -7,6 +7,7 @@ var tough = require('tough-cookie');
 var Cookie = tough.Cookie;
 var _ = require('lodash');
 var path = require('path');
+var h = require('highland');
 var cli = require('commander');
 var app = express();
 var colors = require('colors');
@@ -77,44 +78,61 @@ function staticProxy(proxyUrl, port, protocol, staticFolders){
     console.log(colors.yellow('Requesting url >> ', makeUrl(req.url)));
     // assign cookies to cookiejar
     _.forEach(req.cookies, function(value, key){
-      //j.setCookie(req.cookie(key+'='+value, 'rainforestqa.com'));
-
       j.setCookie(key + '=' + value, 'https://app.rainforestqa.com');
     });
 
     var pipe = false
 
+    var isText = false;
+
+
+    var headers = _.mapValues(req.headers, function(value, key){
+      if (key === 'host'){
+        if (_.isString(value)){
+          value = value.replace(/localhost/gi, proxyUrl);
+        }else if (_.isArray(value)){
+          value = value.map(function(val){ return val.replace(/localhost/gi, proxyUrl); });
+        }
+      }
+      return value;
+    });
+
     request({
       method: req.method,
       jar: j,
+      headers: {'x-csrf-token': req.headers['x-csrf-token']},
       uri: makeUrl(req.url),
       form: req.body
-    }, function (error, response, body) {
-      if(error){
-        console.log(colors.red(error));
-        res.send(error);
-      }{
-        //_.contains(response.headers['content-type'])
-        _.forEach(response.headers, function(value, key){
-          if (key === 'set-cookie' || key === 'location'){
-            if (_.isString(value)){
-              value = value.replace(proxyUrl, 'localhost:'+ port);
-              value = value.replace('https', 'http')
-            }else if (_.isArray(value)){
-              value = value.map(function(val){ return val.replace(proxyUrl, 'localhost:'+ port); });
-            }
+    })
+    .on('response', function(response){
+      response.headers = _.mapValues(response.headers, function(value, key){
+        if (key === 'set-cookie' || key === 'location'){
+          if (_.isString(value)){
+            value = value.replace(proxyUrl, 'localhost:'+ port);
+            value = value.replace('https', 'http')
+          }else if (_.isArray(value)){
+            value = value.map(function(val){ return val.replace(proxyUrl, 'localhost:'+ port); });
           }
-          res.setHeader(key, value);
-        });
-        if(_.contains(response.headers['content-type'], 'text/html')){
-          body = body.replace(proxyUrl, 'localhost:'+ port);
         }
-        console.log(_.keys(res));
-        console.log(colors.green('Successfully requested >> ', makeUrl(req.url)));
-        res.status(response.statusCode);
-        res.send(new Buffer(body));
+        return value;
+      });
+
+      if(_.contains(response.headers['content-type'], 'html') || _.contains(response.headers['content-type'], 'text')){
+        isText = true;
       }
-    });
+
+      console.log(colors.green('Successfully requested >> ', makeUrl(req.url)));
+    })
+    //    .pipe(h.pipeline(function(s){
+    //      return s.map(function(b, c, d){
+    //        console.log('isText', isText);
+    //        if(isText){
+    //          b = new Buffer(b.toString().replace(proxyUrl, 'localhost:'+ port));
+    //        }
+    //        return b;
+    //      })
+    //    }))
+    .pipe(res);
   };
 
   app.get('/*', makeRequest);
