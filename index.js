@@ -6,7 +6,6 @@ var tough = require('tough-cookie');
 var Cookie = tough.Cookie;
 var _ = require('lodash');
 var path = require('path');
-var h = require('highland');
 var cli = require('commander');
 var app = express();
 var colors = require('colors');
@@ -122,15 +121,6 @@ function staticProxy(proxyUrl, port, protocol, staticFolders){
 
       console.log(colors.green('Successfully requested >> ', makeUrl(req.url)));
     })
-    //    .pipe(h.pipeline(function(s){
-    //      return s.map(function(b, c, d){
-    //        console.log('isText', isText);
-    //        if(isText){
-    //          b = new Buffer(b.toString().replace(proxyUrl, 'localhost:'+ port));
-    //        }
-    //        return b;
-    //      })
-    //    }))
     .pipe(res);
   };
 
