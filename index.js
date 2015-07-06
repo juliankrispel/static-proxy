@@ -29,10 +29,10 @@ var replaceUrl = function(body, url, replacementUrl){
 
 cli
   .version(package.version)
-  .option('-u --url [url]', 'Set url of proxy [url] (required)', stripProtocol)
-  .option('-f --folders <folders>', 'Add a list of folders <folders>', list)
-  .option('-p --port [port]', 'Set port of local server [port]', 3000)
-  .option('-P --protocol [protocol]', 'Protocol to use for proxy [protocol]', 'https')
+  .option('-u --url [url]', 'Set url of proxy (required)', stripProtocol)
+  .option('-f --folders <folders>', 'Add a list of folders', list)
+  .option('-p --port [port]', 'Set port of local server', 3000)
+  .option('-P --protocol [protocol]', 'Protocol to use for proxy', 'https')
   .parse(process.argv);
 
 if(!module.parent){
@@ -147,6 +147,5 @@ function staticProxy(proxyUrl, port, protocol, staticFolders){
     console.log(colors.green('static proxy listening at http://%s:%s'), host, port);
   });
 };
-
 
 module.exports = staticProxy;
