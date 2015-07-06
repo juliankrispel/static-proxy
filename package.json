@@ -17,6 +17,7 @@
     "lodash": "^3.9.3",
     "multer": "^0.1.8",
     "superstatic": "^2.2.1",
+    "through2": "^2.0.0",
     "tough-cookie": "^2.0.0"
   },
   "devDependencies": {
