@@ -31,5 +31,9 @@
     "request": "^2.58.0",
     "serve-static": "^1.10.0",
     "superstatic-proxy": "^2.1.0"
+  },
+  "preferGlobal": "true",
+  "bin": {
+    "static-proxy": "index.js"
   }
 }
