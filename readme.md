@@ -2,6 +2,8 @@
 
 A static file server which falls back to proxying your requests if there is no local file matching the route.
 
+Basically, this is useful for frontend developers which want to be able to point their frontend app to different backends, i.e. your local devserver, or your production environment etc.
+
 ## Usage
 
 You can use the `static-proxy` module in your app or as a cli tool.

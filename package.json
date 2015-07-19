@@ -3,6 +3,10 @@
   "version": "0.1.1",
   "description": "A little server that serves static files and falls back to proxied content.",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/juliankrispel/static-proxy"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
