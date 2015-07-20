@@ -10,14 +10,14 @@ You can use the `static-proxy` module in your app or as a cli tool.
 
 Using static-proxy as a cli tool:
 
-```
-  npm install static-proxy -g
+```bash
+npm install static-proxy -g
 
-  // cd into your project
-  cd ~/my-project
+# cd into your project
+cd ~/my-project
 
-  // start static-proxy
-  static-proxy -u google.com -f public,assets,otherFolder -p 3000 -P https
+# start static-proxy
+static-proxy -u google.com -f public,assets,otherFolder -p 3000 -P https
 ```
 
 Using static-proxy in your app or build script:
