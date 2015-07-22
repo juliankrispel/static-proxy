@@ -37,21 +37,26 @@ var replaceUrl = function(body, url, replacementUrl){
 cli
   .version(package.version)
   .option('-u --url [url]', 'Set url of proxy (required)', stripProtocol)
-  .option('-f --folders <folders>', 'Add a list of folders', list)
   .option('-p --port [port]', 'Set port of local server', 3000)
   .option('-P --protocol [protocol]', 'Protocol to use for proxy', 'https')
+  .option('-f --folders <folders>', 'Add a list of folders', list)
+  .option('-v --verbose', 'Set logger to be verbose')
   .parse(process.argv);
 
 if(!module.parent){
-  staticProxy(cli.url, cli.port, cli.protocol, cli.folders);
+  staticProxy(cli.url, cli.port, cli.protocol, cli.folders, cli.verbose);
 }
 
-function staticProxy(proxyUrl, port, protocol, staticFolders, transform){
+function staticProxy(proxyUrl, port, protocol, staticFolders, verbose, transform){
   if(proxyUrl === undefined){
     console.log(colors.red('Error: a url for the proxy must be defined\n') +
              colors.yellow('Define a proxy-url Like this: \n' +
                            'static-proxy -u google.com'));
     return ;
+  }
+
+  if (verbose === undefined){
+    verbose = false;
   }
 
   if (transform === undefined){
@@ -87,7 +92,9 @@ function staticProxy(proxyUrl, port, protocol, staticFolders, transform){
   var j = request.jar();
 
   var makeRequest = function(req, res, next){
-    console.log(colors.yellow('Requesting url >> ', makeUrl(req.url)));
+    if(verbose === true){
+      console.log(colors.yellow('Requesting url >> ', makeUrl(req.url)));
+    }
     // assign cookies to cookiejar
     _.forEach(req.cookies, function(value, key){
       j.setCookie(key + '=' + value, proxyUrl);
@@ -129,11 +136,10 @@ function staticProxy(proxyUrl, port, protocol, staticFolders, transform){
         return value;
       });
 
-      if(_.contains(response.headers['content-type'], 'html') || _.contains(response.headers['content-type'], 'text')){
-        isText = true;
+      res.writeHead(response.statusCode, response.headers)
+      if(verbose === true){
+        console.log(colors.green('Successfully requested >> ', makeUrl(req.url)));
       }
-
-      console.log(colors.green('Successfully requested >> ', makeUrl(req.url)));
     })
     .pipe(transformResponse(transform))
     .pipe(res);
@@ -149,7 +155,7 @@ function staticProxy(proxyUrl, port, protocol, staticFolders, transform){
     if(host === '::') host = '0.0.0.0'
     var port = server.address().port;
 
-    console.log(colors.green('static proxy listening at http://%s:%s'), host, port);
+    console.log(colors.green('static-proxy listening at http://%s:%s'), host, port);
   });
 };
 
