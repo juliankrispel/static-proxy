@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 var express = require('express');
 var request = require('request');
+var Transform = require('stream').Transform;
 var cookieParser = require('cookie-parser');
 var tough = require('tough-cookie');
 var Cookie = tough.Cookie;
@@ -11,11 +12,19 @@ var app = express();
 var colors = require('colors');
 var bodyParser = require('body-parser');
 var package = require('./package.json');
-var cookieUrl = 'rainforestqa.com'
 
 var list = function(list){
   return list.split(',').filter(function(item){ return item.length > 0});
 };
+
+var transformResponse = function(transform, proxyUrl){
+  var parser = new Transform();
+  parser._transform = function(data, encoding, done) {
+    this.push(transform(data, encoding));
+    done();
+  };
+  return parser;
+}
 
 var stripProtocol = function(url){
   return url.replace(/.+\:\/\//, '');
@@ -37,12 +46,17 @@ if(!module.parent){
   staticProxy(cli.url, cli.port, cli.protocol, cli.folders);
 }
 
-function staticProxy(proxyUrl, port, protocol, staticFolders){
+function staticProxy(proxyUrl, port, protocol, staticFolders, transform){
   if(proxyUrl === undefined){
     console.log(colors.red('Error: a url for the proxy must be defined\n') +
              colors.yellow('Define a proxy-url Like this: \n' +
                            'static-proxy -u google.com'));
     return ;
+  }
+
+  if (transform === undefined){
+    // No-op by default
+    transform = function(data){ return data; }
   }
 
   if (port === undefined){
@@ -72,11 +86,11 @@ function staticProxy(proxyUrl, port, protocol, staticFolders){
 
   var j = request.jar();
 
-  var makeRequest = function(req, res){
+  var makeRequest = function(req, res, next){
     console.log(colors.yellow('Requesting url >> ', makeUrl(req.url)));
     // assign cookies to cookiejar
     _.forEach(req.cookies, function(value, key){
-      j.setCookie(key + '=' + value, 'https://app.rainforestqa.com');
+      j.setCookie(key + '=' + value, proxyUrl);
     });
 
     var pipe = false
@@ -107,7 +121,7 @@ function staticProxy(proxyUrl, port, protocol, staticFolders){
         if (key === 'set-cookie' || key === 'location'){
           if (_.isString(value)){
             value = value.replace(proxyUrl, 'localhost:'+ port);
-            value = value.replace('https', 'http')
+            value = value.replace('https', 'http');
           }else if (_.isArray(value)){
             value = value.map(function(val){ return val.replace(proxyUrl, 'localhost:'+ port); });
           }
@@ -121,12 +135,14 @@ function staticProxy(proxyUrl, port, protocol, staticFolders){
 
       console.log(colors.green('Successfully requested >> ', makeUrl(req.url)));
     })
+    .pipe(transformResponse(transform))
     .pipe(res);
   };
 
   app.get('/*', makeRequest);
   app.post('/*', makeRequest);
   app.put('/*', makeRequest);
+
 
   var server = app.listen(3000, function () {
     var host = server.address().address;
