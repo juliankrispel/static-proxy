@@ -29,3 +29,17 @@ var staticProxy = require('static-proxy');
 
 staticProxy('http://google.com', 3000, 'https', ['public', 'assets']);
 ```
+
+If you're using static-proxy in your node script, you can transform the response body of a request. This allows you to modify the response body in whatever way you please. We use it for example to replace absolute urls with relative ones so that we can map assets from a cdn or 3rd party resources to assets in our public folder.
+
+Example:
+```
+var transform = function(respBody, encoding){
+  return respBody.toString().replace(/\/\/static\.[a-z]+\.com\/[a-z0-9]+\//gi, '/');
+};
+
+gulp.task('staticProxyQa', function(){
+  staticProxy('google.com', 3000, 'https', ['public'], transform);
+});
+
+```
