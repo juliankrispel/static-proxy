@@ -150,7 +150,7 @@ function staticProxy(proxyUrl, port, protocol, staticFolders, verbose, transform
   app.put('/*', makeRequest);
 
 
-  var server = app.listen(3000, function () {
+  var server = app.listen(port, function () {
     var host = server.address().address;
     if(host === '::') host = '0.0.0.0'
     var port = server.address().port;
