@@ -30,10 +30,6 @@ var stripProtocol = function(url){
   return url.replace(/.+\:\/\//, '');
 }
 
-var replaceUrl = function(body, url, replacementUrl){
-  return body.toString().replace(url, replacementUrl);
-};
-
 cli
   .version(package.version)
   .option('-u --url [url]', 'Set url of proxy (required)', stripProtocol)
@@ -45,6 +41,24 @@ cli
 
 if(!module.parent){
   staticProxy(cli.url, cli.port, cli.protocol, cli.folders, cli.verbose);
+}
+
+var mapHeader = function(regex, replacement, value, key){
+  if (_.isString(value)){
+    value = value.replace(regex, replacement);
+  }else if (_.isArray(value)){
+    value = _.map(value, mapHeader.bind(this, regex, replacement));
+  }else if(_.isObject(value)){
+    value = transformHeadersRecursively(value, regex, replacement);
+  }
+  return value;
+};
+
+var transformCookies = function(){
+};
+
+var transformHeadersRecursively = function(headers, regex, replacement){
+  return _.mapValues(headers, mapHeader.bind(this, regex, replacement));
 }
 
 function staticProxy(proxyUrl, port, protocol, staticFolders, verbose, transform){
@@ -89,52 +103,52 @@ function staticProxy(proxyUrl, port, protocol, staticFolders, verbose, transform
     return protocol + '://' + path.join(proxyUrl, url);
   };
 
-  var j = request.jar();
-
   var makeRequest = function(req, res, next){
     if(verbose === true){
       console.log(colors.yellow('Requesting url >> ', makeUrl(req.url)));
     }
-    // assign cookies to cookiejar
-    _.forEach(req.cookies, function(value, key){
-      j.setCookie(key + '=' + value, proxyUrl);
-    });
 
     var pipe = false
 
     var isText = false;
 
+    var headers = req.headers;
 
-    var headers = _.mapValues(req.headers, function(value, key){
-      if (key === 'host'){
-        if (_.isString(value)){
-          value = value.replace(/localhost/gi, proxyUrl);
-        }else if (_.isArray(value)){
-          value = value.map(function(val){ return val.replace(/localhost/gi, proxyUrl); });
-        }
-      }
-      return value;
-    });
+    var localhostUrl = 'localhost';
+    if (port && port !== 80){
+      localhostUrl+= ':' + port;
+    }
+
+    var localhostRegex = new RegExp(localhostUrl, 'gi');
+    var headers = transformHeadersRecursively(headers, localhostRegex, proxyUrl);
+
+    // set the host to the proxy url
+    headers.host = proxyUrl;
+    headers.referer = makeUrl(req.url);
+    headers.origin = makeUrl('')
+    headers.method = req.method;
+
+    _.forEach(headers, function(val, k){console.log(k + ': ' + val);});
 
     request({
       method: req.method,
-      jar: j,
-      headers: {'x-csrf-token': req.headers['x-csrf-token']},
+      headers: headers,
       uri: makeUrl(req.url),
-      form: req.body
+      json: req.body
     })
     .on('response', function(response){
-      response.headers = _.mapValues(response.headers, function(value, key){
-        if (key === 'set-cookie' || key === 'location'){
-          if (_.isString(value)){
-            value = value.replace(proxyUrl, 'localhost:'+ port);
-            value = value.replace('https', 'http');
-          }else if (_.isArray(value)){
-            value = value.map(function(val){ return val.replace(proxyUrl, 'localhost:'+ port); });
-          }
-        }
-        return value;
-      });
+      var proxyUrlRegex = new RegExp(proxyUrl, 'gi');
+      var localhostUrl = 'localhost';
+      if (port && port !== 80){
+        localhostUrl+= ':' + port;
+      }
+
+      response.headers = transformHeadersRecursively(response.headers, /(app)?\.?rnfrstqa\.com/gi, localhostUrl);
+      response.headers = transformHeadersRecursively(response.headers, 'https', 'http');
+      if(response.headers['set-cookie']){
+        response.headers['set-cookie'] = response.headers['set-cookie'].map(function(cookie){ return cookie.replace(/domain=[^;]+;/, 'domain=;') });
+        console.log('set cookie', response.headers['set-cookie']);
+      }
 
       res.writeHead(response.statusCode, response.headers)
       if(verbose === true){
@@ -148,7 +162,6 @@ function staticProxy(proxyUrl, port, protocol, staticFolders, verbose, transform
   app.get('/*', makeRequest);
   app.post('/*', makeRequest);
   app.put('/*', makeRequest);
-
 
   var server = app.listen(port, function () {
     var host = server.address().address;
