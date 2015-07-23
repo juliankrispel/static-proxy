@@ -130,12 +130,18 @@ function staticProxy(proxyUrl, port, protocol, staticFolders, verbose, transform
 
     _.forEach(headers, function(val, k){console.log(k + ': ' + val);});
 
-    request({
+    var options = {
       method: req.method,
       headers: headers,
       uri: makeUrl(req.url),
-      json: req.body
-    })
+    }
+    if(_.contains(req.headers['content-type'], 'form')){
+      options.form = req.body
+    }else{
+      options.json = req.body
+    }
+
+    request(options)
     .on('response', function(response){
       var proxyUrlRegex = new RegExp(proxyUrl, 'gi');
       var localhostUrl = 'localhost';
@@ -151,9 +157,6 @@ function staticProxy(proxyUrl, port, protocol, staticFolders, verbose, transform
       }
 
       res.writeHead(response.statusCode, response.headers)
-      if(verbose === true){
-        console.log(colors.green('Successfully requested >> ', makeUrl(req.url)));
-      }
     })
     .pipe(transformResponse(transform))
     .pipe(res);
