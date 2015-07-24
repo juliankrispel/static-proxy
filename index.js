@@ -5,6 +5,7 @@ var Transform = require('stream').Transform;
 var cookieParser = require('cookie-parser');
 var tough = require('tough-cookie');
 var Cookie = tough.Cookie;
+var Readable = require('stream').Readable;
 var _ = require('lodash');
 var path = require('path');
 var cli = require('commander');
@@ -121,6 +122,8 @@ function staticProxy(proxyUrl, port, protocol, staticFolders, verbose, transform
 
     var localhostRegex = new RegExp(localhostUrl, 'gi');
     var headers = transformHeadersRecursively(headers, localhostRegex, proxyUrl);
+    console.log('accept-encoding', headers['accept-encoding']);
+    headers['accept-encoding'] = headers['accept-encoding'].replace('gzip, ', '');
 
     // set the host to the proxy url
     headers.host = proxyUrl;
@@ -133,6 +136,7 @@ function staticProxy(proxyUrl, port, protocol, staticFolders, verbose, transform
     var options = {
       method: req.method,
       headers: headers,
+      encoding: null,
       uri: makeUrl(req.url),
     }
     if(_.contains(req.headers['content-type'], 'form')){
@@ -157,9 +161,11 @@ function staticProxy(proxyUrl, port, protocol, staticFolders, verbose, transform
       }
 
       res.writeHead(response.statusCode, response.headers)
+      response
+      .pipe(transformResponse(transform))
+      .pipe(res);
     })
-    .pipe(transformResponse(transform))
-    .pipe(res);
+
   };
 
   app.get('/*', makeRequest);
