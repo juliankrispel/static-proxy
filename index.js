@@ -168,9 +168,7 @@ function staticProxy(proxyUrl, port, protocol, staticFolders, verbose, transform
 
   };
 
-  app.get('/*', makeRequest);
-  app.post('/*', makeRequest);
-  app.put('/*', makeRequest);
+  app.all('/*', makeRequest);
 
   var server = app.listen(port, function () {
     var host = server.address().address;
