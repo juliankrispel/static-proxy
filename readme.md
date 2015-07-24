@@ -4,6 +4,8 @@ A static file server which falls back to proxying your requests if there is no l
 
 Basically, this is useful for frontend developers which want to be able to point their frontend app to different backends, i.e. your local devserver, or your production environment etc.
 
+Static proxy is part of our dev setup at [rainforest](http://rainforestqa.com).
+
 ## Usage
 
 You can use the `static-proxy` module in your app or as a cli tool.
