@@ -1,6 +1,6 @@
 {
   "name": "static-proxy",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "A little server that serves static files and falls back to proxied content.",
   "main": "index.js",
   "repository": {

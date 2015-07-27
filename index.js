@@ -122,7 +122,6 @@ function staticProxy(proxyUrl, port, protocol, staticFolders, verbose, transform
 
     var localhostRegex = new RegExp(localhostUrl, 'gi');
     var headers = transformHeadersRecursively(headers, localhostRegex, proxyUrl);
-    console.log('accept-encoding', headers['accept-encoding']);
     headers['accept-encoding'] = headers['accept-encoding'].replace('gzip, ', '');
 
     // set the host to the proxy url
@@ -131,7 +130,9 @@ function staticProxy(proxyUrl, port, protocol, staticFolders, verbose, transform
     headers.origin = makeUrl('')
     headers.method = req.method;
 
-    _.forEach(headers, function(val, k){console.log(k + ': ' + val);});
+    if (verbose === true){
+      _.forEach(headers, function(val, k){console.log(k + ': ' + val);});
+    }
 
     var options = {
       method: req.method,
@@ -157,7 +158,9 @@ function staticProxy(proxyUrl, port, protocol, staticFolders, verbose, transform
       response.headers = transformHeadersRecursively(response.headers, 'https', 'http');
       if(response.headers['set-cookie']){
         response.headers['set-cookie'] = response.headers['set-cookie'].map(function(cookie){ return cookie.replace(/domain=[^;]+;/, 'domain=;') });
-        console.log('set cookie', response.headers['set-cookie']);
+        if(verbose === true){
+          console.log('set cookie', response.headers['set-cookie']);
+        }
       }
 
       res.writeHead(response.statusCode, response.headers)
@@ -174,7 +177,6 @@ function staticProxy(proxyUrl, port, protocol, staticFolders, verbose, transform
     var host = server.address().address;
     if(host === '::') host = '0.0.0.0'
     var port = server.address().port;
-
     console.log(colors.green('static-proxy listening at http://%s:%s'), host, port);
   });
 };
