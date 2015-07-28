@@ -154,7 +154,7 @@ function staticProxy(proxyUrl, port, protocol, staticFolders, verbose, transform
         localhostUrl+= ':' + port;
       }
 
-      response.headers = transformHeadersRecursively(response.headers, /(app)?\.?rnfrstqa\.com/gi, localhostUrl);
+      response.headers = transformHeadersRecursively(response.headers, new RegExp(proxyUrl, 'gi'), localhostUrl);
       response.headers = transformHeadersRecursively(response.headers, 'https', 'http');
       if(response.headers['set-cookie']){
         response.headers['set-cookie'] = response.headers['set-cookie'].map(function(cookie){ return cookie.replace(/domain=[^;]+;/, 'domain=;') });
