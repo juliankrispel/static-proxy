@@ -138,6 +138,7 @@ function staticProxy(proxyUrl, port, protocol, staticFolders, verbose, transform
       method: req.method,
       headers: headers,
       encoding: null,
+      followRedirect: false,
       uri: makeUrl(req.url),
     }
     if(_.contains(req.headers['content-type'], 'form')){
