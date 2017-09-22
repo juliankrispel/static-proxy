@@ -122,7 +122,9 @@ function staticProxy(proxyUrl, port, protocol, staticFolders, verbose, transform
 
     var localhostRegex = new RegExp(localhostUrl, 'gi');
     var headers = transformHeadersRecursively(headers, localhostRegex, proxyUrl);
-    headers['accept-encoding'] = headers['accept-encoding'].replace('gzip, ', '');
+    if(headers['accept-encoding']){
+        headers['accept-encoding'] = headers['accept-encoding'].replace('gzip, ', '');
+    }
 
     // set the host to the proxy url
     headers.host = proxyUrl;
